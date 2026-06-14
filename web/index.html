@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Convert PNG, JPEG, and other website images to lightweight WebP files in your browser."
+    />
+    <title>WebReady | Fast website images</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <a class="brand" href="/" aria-label="WebReady home">
+          <span class="brand-mark">W</span>
+          <span>WebReady</span>
+        </a>
+        <div class="privacy-pill"><span></span> Your images stay on your device</div>
+        <h1>Make every image<br /><em>ready for the web.</em></h1>
+        <p class="hero-copy">
+          Convert PNG, JPEG, GIF, BMP, and other common image files into fast,
+          lightweight WebP files. Nothing gets uploaded.
+        </p>
+      </header>
+
+      <section class="workspace" aria-labelledby="converter-title">
+        <div class="workspace-top">
+          <div>
+            <p class="eyebrow">Browser image converter</p>
+            <h2 id="converter-title">Drop in your images</h2>
+          </div>
+          <button class="ghost-button" id="clearButton" type="button" disabled>Clear all</button>
+        </div>
+
+        <label class="drop-zone" id="dropZone" for="fileInput">
+          <input
+            id="fileInput"
+            type="file"
+            accept="image/png,image/jpeg,image/gif,image/bmp,image/webp,image/tiff,image/avif"
+            multiple
+          />
+          <span class="upload-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
+            </svg>
+          </span>
+          <strong>Drop images here or <u>browse files</u></strong>
+          <small>Choose multiple files at once</small>
+        </label>
+
+        <div class="settings">
+          <div class="setting">
+            <div class="setting-heading">
+              <label for="quality">WebP quality</label>
+              <output id="qualityValue" for="quality">82%</output>
+            </div>
+            <input id="quality" type="range" min="20" max="100" value="82" />
+            <p>82% is a strong balance for most websites.</p>
+          </div>
+          <div class="setting">
+            <div class="setting-heading">
+              <label for="scale">Image dimensions</label>
+              <output id="scaleValue" for="scale">100%</output>
+            </div>
+            <input id="scale" type="range" min="10" max="100" value="100" />
+            <p>Resize width and height by this percentage.</p>
+          </div>
+        </div>
+
+        <div class="file-section" id="fileSection" hidden>
+          <div class="file-summary">
+            <span id="fileCount">0 images</span>
+            <span id="totalSize">0 MB selected</span>
+          </div>
+          <ul class="file-list" id="fileList"></ul>
+        </div>
+
+        <div class="actions">
+          <div class="status" id="status" role="status">Add images to begin.</div>
+          <div class="action-buttons">
+            <button class="ghost-button download-all" id="downloadAllButton" type="button" hidden>
+              Download all
+            </button>
+            <button class="primary-button" id="convertButton" type="button" disabled>
+              Convert to WebP
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="benefits" aria-label="Benefits">
+        <article>
+          <span>01</span>
+          <h3>Private by design</h3>
+          <p>Every conversion happens locally in your browser. Your files never leave your device.</p>
+        </article>
+        <article>
+          <span>02</span>
+          <h3>Built for speed</h3>
+          <p>WebP images are typically much smaller, helping websites load quickly and rank better.</p>
+        </article>
+        <article>
+          <span>03</span>
+          <h3>Simple controls</h3>
+          <p>Choose quality and dimensions once, then convert your whole batch with one click.</p>
+        </article>
+      </section>
+    </main>
+
+    <template id="fileTemplate">
+      <li class="file-card">
+        <img class="thumbnail" alt="" />
+        <div class="file-details">
+          <strong class="file-name"></strong>
+          <span class="file-meta"></span>
+          <span class="result-meta"></span>
+        </div>
+        <button class="download-button" type="button" hidden>Download</button>
+        <button class="remove-button" type="button" aria-label="Remove image">×</button>
+      </li>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
