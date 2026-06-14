@@ -9,6 +9,8 @@ uploaded to a server.
 The static site is in `web/`. It requires no framework, build command, backend,
 or environment variables.
 
+GitHub Pages deploys the site automatically after each push to `main`.
+
 Run it locally:
 
 ```powershell
