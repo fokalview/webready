@@ -95,6 +95,41 @@
           </div>
         </div>
 
+        <div class="batch-advisor" id="batchAdvisor" hidden>
+          <div>
+            <p class="eyebrow">Batch advisor</p>
+            <h3 id="batchAdviceTitle">Add images to calculate the best settings.</h3>
+            <p id="batchAdviceText">
+              WebReady will estimate output size from the average file size, format mix,
+              quality setting, and resize percentage.
+            </p>
+          </div>
+          <div class="advisor-stats" aria-label="Batch size estimates">
+            <div>
+              <span>Original total</span>
+              <strong id="advisorOriginalTotal">0 MB</strong>
+            </div>
+            <div>
+              <span>Average original</span>
+              <strong id="advisorAverageOriginal">0 MB</strong>
+            </div>
+            <div>
+              <span id="advisorOutputLabel">Estimated output</span>
+              <strong id="advisorEstimatedTotal">0 MB</strong>
+            </div>
+            <div>
+              <span id="advisorAverageLabel">Estimated average</span>
+              <strong id="advisorEstimatedAverage">0 MB</strong>
+            </div>
+          </div>
+          <div class="advisor-actions">
+            <button class="ghost-button advisor-button" id="applyAdviceButton" type="button">
+              Apply recommended settings
+            </button>
+            <span id="advisorFormats">No files selected</span>
+          </div>
+        </div>
+
         <div class="file-section" id="fileSection" hidden>
           <div class="file-summary">
             <span id="fileCount">0 images</span>

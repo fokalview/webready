@@ -15,6 +15,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -319,6 +323,72 @@ h2 {
   line-height: 1.45;
 }
 
+.batch-advisor {
+  display: grid;
+  grid-template-columns: 1.2fr 1.3fr;
+  gap: 18px;
+  margin: 0 26px 26px;
+  padding: 18px;
+  border: 1px solid rgba(105, 226, 166, 0.45);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(105, 226, 166, 0.08), transparent 55%),
+    #0a1713;
+}
+
+.batch-advisor h3 {
+  margin-bottom: 8px;
+  font-size: 1.05rem;
+}
+
+.batch-advisor p {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+.advisor-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.advisor-stats div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-soft);
+}
+
+.advisor-stats span,
+.advisor-actions span {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.advisor-stats strong {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.advisor-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.advisor-button {
+  padding: 10px 13px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--green);
+}
+
 .file-section {
   padding: 0 26px 26px;
 }
@@ -521,6 +591,20 @@ h2 {
 
   .cheat-grid {
     grid-template-columns: 1fr;
+  }
+
+  .batch-advisor {
+    grid-template-columns: 1fr;
+    margin: 0 18px 18px;
+  }
+
+  .advisor-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .advisor-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .file-section {

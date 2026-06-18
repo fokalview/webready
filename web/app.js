@@ -15,8 +15,20 @@ const zipDownloads = document.querySelector("#zipDownloads");
 const clearButton = document.querySelector("#clearButton");
 const status = document.querySelector("#status");
 const qualityPresets = document.querySelectorAll(".quality-preset");
+const batchAdvisor = document.querySelector("#batchAdvisor");
+const batchAdviceTitle = document.querySelector("#batchAdviceTitle");
+const batchAdviceText = document.querySelector("#batchAdviceText");
+const advisorOriginalTotal = document.querySelector("#advisorOriginalTotal");
+const advisorAverageOriginal = document.querySelector("#advisorAverageOriginal");
+const advisorOutputLabel = document.querySelector("#advisorOutputLabel");
+const advisorEstimatedTotal = document.querySelector("#advisorEstimatedTotal");
+const advisorAverageLabel = document.querySelector("#advisorAverageLabel");
+const advisorEstimatedAverage = document.querySelector("#advisorEstimatedAverage");
+const advisorFormats = document.querySelector("#advisorFormats");
+const applyAdviceButton = document.querySelector("#applyAdviceButton");
 
 let items = [];
+let currentRecommendation = { quality: 82, scale: 100 };
 
 const formatBytes = (bytes) => {
   if (!bytes) return "0 B";
@@ -24,6 +36,8 @@ const formatBytes = (bytes) => {
   const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
   return `${(bytes / 1024 ** index).toFixed(index ? 1 : 0)} ${units[index]}`;
 };
+
+const formatMegabytes = (bytes) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 
 const safeWebpName = (name) => `${name.replace(/\.[^.]+$/, "") || "image"}.webp`;
 
@@ -135,6 +149,7 @@ async function createZipBlob(convertedItems) {
 function updateControls() {
   const count = items.length;
   fileSection.hidden = count === 0;
+  batchAdvisor.hidden = count === 0;
   convertButton.disabled = count === 0;
   clearButton.disabled = count === 0;
   downloadAllButton.hidden = !items.some((item) => item.resultUrl);
@@ -142,10 +157,130 @@ function updateControls() {
   fileCount.textContent = `${count} image${count === 1 ? "" : "s"}`;
   totalSize.textContent = `${formatBytes(items.reduce((sum, item) => sum + item.file.size, 0))} selected`;
   status.textContent = count ? "Ready to convert." : "Add images to begin.";
+  updateBatchAdvisor();
 }
 
 function updateDownloadLabel() {
   downloadAllButton.textContent = zipDownloads.checked ? "Download ZIP" : "Download all";
+}
+
+function clearConvertedResults() {
+  let changed = false;
+  for (const item of items) {
+    if (item.resultUrl) {
+      URL.revokeObjectURL(item.resultUrl);
+      item.resultUrl = null;
+      item.resultBlob = null;
+      item.resultSize = 0;
+      changed = true;
+    }
+  }
+  if (changed) {
+    renderItems();
+    downloadAllButton.hidden = true;
+    status.textContent = "Settings changed. Convert again to create matching WebP files.";
+  }
+}
+
+function estimateRatio(file, selectedQuality, selectedScale) {
+  const extension = file.name.toLowerCase().split(".").pop() || "";
+  const qualityRatio = 0.18 + (selectedQuality / 100) * 0.62;
+  const pixelRatio = (selectedScale / 100) ** 2;
+  const formatRatio =
+    {
+      jpg: 0.72,
+      jpeg: 0.72,
+      png: 0.32,
+      bmp: 0.18,
+      tif: 0.2,
+      tiff: 0.2,
+      gif: 0.45,
+      webp: 0.95,
+      avif: 1.05,
+    }[extension] || 0.65;
+  return Math.max(0.04, Math.min(1.1, qualityRatio * pixelRatio * formatRatio));
+}
+
+function recommendSettings(averageBytes) {
+  const averageMb = averageBytes / 1024 / 1024;
+  if (averageMb >= 18) {
+    return {
+      quality: 78,
+      scale: 60,
+      label: "Large photo batch",
+      advice:
+        "Your average file is very large. Start with 78% quality and 60% dimensions for fast website images, then raise quality if this is hero photography.",
+    };
+  }
+  if (averageMb >= 8) {
+    return {
+      quality: 80,
+      scale: 70,
+      label: "High-resolution batch",
+      advice:
+        "These are still large for normal pages. Try 80% quality and 70% dimensions to cut weight without making the images feel soft.",
+    };
+  }
+  if (averageMb >= 3) {
+    return {
+      quality: 82,
+      scale: 85,
+      label: "Medium-large batch",
+      advice:
+        "A light resize plus balanced WebP quality should be enough for most website sections.",
+    };
+  }
+  return {
+    quality: 82,
+    scale: 100,
+    label: "Web-friendly batch",
+    advice:
+      "These files are already reasonably sized. Keep dimensions at 100% and use 82% quality unless you need extra compression.",
+  };
+}
+
+function getFormatSummary() {
+  const counts = new Map();
+  for (const item of items) {
+    const extension = (item.file.name.toLowerCase().split(".").pop() || "image").replace(
+      "jpeg",
+      "jpg",
+    );
+    counts.set(extension, (counts.get(extension) || 0) + 1);
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([format, count]) => `${count} ${format.toUpperCase()}`)
+    .join(", ");
+}
+
+function updateBatchAdvisor() {
+  if (!items.length) return;
+  const originalTotal = items.reduce((sum, item) => sum + item.file.size, 0);
+  const averageOriginal = originalTotal / items.length;
+  const selectedQuality = Number(quality.value);
+  const selectedScale = Number(scale.value);
+  const estimatedTotal = items.reduce(
+    (sum, item) => sum + item.file.size * estimateRatio(item.file, selectedQuality, selectedScale),
+    0,
+  );
+  const estimatedAverage = estimatedTotal / items.length;
+  const convertedItems = items.filter((item) => item.resultSize);
+  const actualTotal = convertedItems.reduce((sum, item) => sum + item.resultSize, 0);
+  const hasActuals = convertedItems.length === items.length;
+  currentRecommendation = recommendSettings(averageOriginal);
+
+  batchAdviceTitle.textContent = `${currentRecommendation.label}: try ${currentRecommendation.quality}% quality at ${currentRecommendation.scale}% size`;
+  batchAdviceText.textContent = currentRecommendation.advice;
+  advisorOriginalTotal.textContent = formatBytes(originalTotal);
+  advisorAverageOriginal.textContent = formatMegabytes(averageOriginal);
+  advisorOutputLabel.textContent = hasActuals ? "Actual output" : "Estimated output";
+  advisorAverageLabel.textContent = hasActuals ? "Actual average" : "Estimated average";
+  advisorEstimatedTotal.textContent = formatBytes(hasActuals ? actualTotal : estimatedTotal);
+  advisorEstimatedAverage.textContent = formatMegabytes(
+    hasActuals ? actualTotal / convertedItems.length : estimatedAverage,
+  );
+  advisorFormats.textContent = `Formats: ${getFormatSummary()}`;
 }
 
 function renderItems() {
@@ -256,8 +391,16 @@ for (const eventName of ["dragleave", "drop"]) {
 }
 
 dropZone.addEventListener("drop", (event) => addFiles(event.dataTransfer.files));
-quality.addEventListener("input", () => (qualityValue.textContent = `${quality.value}%`));
-scale.addEventListener("input", () => (scaleValue.textContent = `${scale.value}%`));
+quality.addEventListener("input", () => {
+  qualityValue.textContent = `${quality.value}%`;
+  clearConvertedResults();
+  updateBatchAdvisor();
+});
+scale.addEventListener("input", () => {
+  scaleValue.textContent = `${scale.value}%`;
+  clearConvertedResults();
+  updateBatchAdvisor();
+});
 zipDownloads.addEventListener("change", updateDownloadLabel);
 
 qualityPresets.forEach((preset) => {
@@ -266,7 +409,19 @@ qualityPresets.forEach((preset) => {
     qualityValue.textContent = `${quality.value}%`;
     qualityPresets.forEach((button) => button.classList.remove("is-recommended"));
     preset.classList.add("is-recommended");
+    clearConvertedResults();
+    updateBatchAdvisor();
   });
+});
+
+applyAdviceButton.addEventListener("click", () => {
+  quality.value = currentRecommendation.quality;
+  scale.value = currentRecommendation.scale;
+  qualityValue.textContent = `${quality.value}%`;
+  scaleValue.textContent = `${scale.value}%`;
+  qualityPresets.forEach((button) => button.classList.remove("is-recommended"));
+  clearConvertedResults();
+  updateBatchAdvisor();
 });
 
 clearButton.addEventListener("click", () => {
@@ -318,10 +473,13 @@ convertButton.addEventListener("click", async () => {
   const originalSize = items.reduce((sum, item) => sum + item.file.size, 0);
   const resultSize = items.reduce((sum, item) => sum + item.resultSize, 0);
   const saved = Math.max(0, originalSize - resultSize);
-  status.textContent = `${converted} converted${failed ? `, ${failed} failed` : ""} · ${formatBytes(saved)} saved`;
+  const averageBefore = converted ? originalSize / converted : 0;
+  const averageAfter = converted ? resultSize / converted : 0;
+  status.textContent = `${converted} converted${failed ? `, ${failed} failed` : ""} · avg ${formatMegabytes(averageBefore)} to ${formatMegabytes(averageAfter)} · ${formatBytes(saved)} saved`;
   convertButton.disabled = false;
   clearButton.disabled = false;
   downloadAllButton.hidden = converted === 0;
+  updateBatchAdvisor();
 });
 
 updateControls();
