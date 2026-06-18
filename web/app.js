@@ -15,6 +15,7 @@ const zipDownloads = document.querySelector("#zipDownloads");
 const clearButton = document.querySelector("#clearButton");
 const status = document.querySelector("#status");
 const qualityPresets = document.querySelectorAll(".quality-preset");
+const dimensionPresets = document.querySelectorAll(".dimension-preset");
 const batchAdvisor = document.querySelector("#batchAdvisor");
 const batchAdviceTitle = document.querySelector("#batchAdviceTitle");
 const batchAdviceText = document.querySelector("#batchAdviceText");
@@ -209,7 +210,7 @@ function recommendSettings(averageBytes) {
       scale: 60,
       label: "Large photo batch",
       advice:
-        "Your average file is very large. Start with 78% quality and 60% dimensions for fast website images, then raise quality if this is hero photography.",
+        "Your average file is very large. Start with 78% quality and 60% dimensions. Resizing matters most here: 60% width and height is about 36% of the original pixels.",
     };
   }
   if (averageMb >= 8) {
@@ -281,6 +282,19 @@ function updateBatchAdvisor() {
     hasActuals ? actualTotal / convertedItems.length : estimatedAverage,
   );
   advisorFormats.textContent = `Formats: ${getFormatSummary()}`;
+}
+
+function highlightMatchingDimensionPreset() {
+  let matched = false;
+  dimensionPresets.forEach((button) => {
+    const isMatch =
+      button.dataset.scale === String(scale.value) && button.dataset.quality === String(quality.value);
+    button.classList.toggle("is-recommended", isMatch);
+    matched = matched || isMatch;
+  });
+  if (!matched) {
+    dimensionPresets.forEach((button) => button.classList.remove("is-recommended"));
+  }
 }
 
 function renderItems() {
@@ -393,11 +407,13 @@ for (const eventName of ["dragleave", "drop"]) {
 dropZone.addEventListener("drop", (event) => addFiles(event.dataTransfer.files));
 quality.addEventListener("input", () => {
   qualityValue.textContent = `${quality.value}%`;
+  highlightMatchingDimensionPreset();
   clearConvertedResults();
   updateBatchAdvisor();
 });
 scale.addEventListener("input", () => {
   scaleValue.textContent = `${scale.value}%`;
+  highlightMatchingDimensionPreset();
   clearConvertedResults();
   updateBatchAdvisor();
 });
@@ -407,6 +423,21 @@ qualityPresets.forEach((preset) => {
   preset.addEventListener("click", () => {
     quality.value = preset.dataset.quality;
     qualityValue.textContent = `${quality.value}%`;
+    qualityPresets.forEach((button) => button.classList.remove("is-recommended"));
+    preset.classList.add("is-recommended");
+    highlightMatchingDimensionPreset();
+    clearConvertedResults();
+    updateBatchAdvisor();
+  });
+});
+
+dimensionPresets.forEach((preset) => {
+  preset.addEventListener("click", () => {
+    scale.value = preset.dataset.scale;
+    quality.value = preset.dataset.quality;
+    scaleValue.textContent = `${scale.value}%`;
+    qualityValue.textContent = `${quality.value}%`;
+    dimensionPresets.forEach((button) => button.classList.remove("is-recommended"));
     qualityPresets.forEach((button) => button.classList.remove("is-recommended"));
     preset.classList.add("is-recommended");
     clearConvertedResults();
@@ -420,6 +451,7 @@ applyAdviceButton.addEventListener("click", () => {
   qualityValue.textContent = `${quality.value}%`;
   scaleValue.textContent = `${scale.value}%`;
   qualityPresets.forEach((button) => button.classList.remove("is-recommended"));
+  highlightMatchingDimensionPreset();
   clearConvertedResults();
   updateBatchAdvisor();
 });

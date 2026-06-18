@@ -273,7 +273,8 @@ h2 {
   font-size: 0.75rem;
 }
 
-.cheat-sheet {
+.cheat-sheet,
+.dimension-guide {
   display: grid;
   grid-template-columns: 0.9fr 2fr;
   gap: 18px;
@@ -284,18 +285,25 @@ h2 {
   background: #0a1713;
 }
 
-.cheat-sheet h3 {
+.cheat-sheet h3,
+.dimension-guide h3 {
   margin-bottom: 0;
   font-size: 1rem;
 }
 
-.cheat-grid {
+.cheat-grid,
+.dimension-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
 }
 
-.quality-preset {
+.dimension-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.quality-preset,
+.dimension-preset {
   display: grid;
   gap: 5px;
   padding: 12px;
@@ -308,16 +316,21 @@ h2 {
 
 .quality-preset:hover,
 .quality-preset:focus-visible,
-.quality-preset.is-recommended {
+.quality-preset.is-recommended,
+.dimension-preset:hover,
+.dimension-preset:focus-visible,
+.dimension-preset.is-recommended {
   border-color: var(--green);
 }
 
-.quality-preset strong {
+.quality-preset strong,
+.dimension-preset strong {
   color: var(--green);
   font-size: 0.84rem;
 }
 
-.quality-preset span {
+.quality-preset span,
+.dimension-preset span {
   color: var(--muted);
   font-size: 0.72rem;
   line-height: 1.45;
@@ -584,12 +597,14 @@ h2 {
     width: 100%;
   }
 
-  .cheat-sheet {
+  .cheat-sheet,
+  .dimension-guide {
     grid-template-columns: 1fr;
     margin: 0 18px 18px;
   }
 
-  .cheat-grid {
+  .cheat-grid,
+  .dimension-grid {
     grid-template-columns: 1fr;
   }
 

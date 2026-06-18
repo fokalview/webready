@@ -66,7 +66,10 @@
               <output id="scaleValue" for="scale">100%</output>
             </div>
             <input id="scale" type="range" min="10" max="100" value="100" />
-            <p>Resize width and height by this percentage.</p>
+            <p>
+              For large camera photos, dimensions usually save more than quality.
+              60% width and height is about 36% of the pixels.
+            </p>
           </div>
         </div>
 
@@ -91,6 +94,27 @@
             <button class="quality-preset" type="button" data-quality="45">
               <strong>20-50%</strong>
               <span>Maximum compression when detail matters less</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="dimension-guide" aria-label="Dimension guide">
+          <div>
+            <p class="eyebrow">Dimension guide</p>
+            <h3>Choose size by where the image will appear.</h3>
+          </div>
+          <div class="dimension-grid">
+            <button class="dimension-preset" type="button" data-scale="75" data-quality="82">
+              <strong>Hero or banner</strong>
+              <span>70-80% dimensions, 80-85% quality</span>
+            </button>
+            <button class="dimension-preset is-recommended" type="button" data-scale="60" data-quality="78">
+              <strong>Normal website image</strong>
+              <span>50-60% dimensions, 75-82% quality</span>
+            </button>
+            <button class="dimension-preset" type="button" data-scale="45" data-quality="70">
+              <strong>Thumbnail or card</strong>
+              <span>35-50% dimensions, 65-75% quality</span>
             </button>
           </div>
         </div>
