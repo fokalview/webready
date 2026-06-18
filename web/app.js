@@ -11,8 +11,10 @@ const qualityValue = document.querySelector("#qualityValue");
 const scaleValue = document.querySelector("#scaleValue");
 const convertButton = document.querySelector("#convertButton");
 const downloadAllButton = document.querySelector("#downloadAllButton");
+const zipDownloads = document.querySelector("#zipDownloads");
 const clearButton = document.querySelector("#clearButton");
 const status = document.querySelector("#status");
+const qualityPresets = document.querySelectorAll(".quality-preset");
 
 let items = [];
 
@@ -25,15 +27,125 @@ const formatBytes = (bytes) => {
 
 const safeWebpName = (name) => `${name.replace(/\.[^.]+$/, "") || "image"}.webp`;
 
+const crcTable = Array.from({ length: 256 }, (_, index) => {
+  let value = index;
+  for (let bit = 0; bit < 8; bit += 1) {
+    value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
+  }
+  return value >>> 0;
+});
+
+function crc32(bytes) {
+  let crc = 0xffffffff;
+  for (const byte of bytes) {
+    crc = crcTable[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function writeUint16(bytes, offset, value) {
+  bytes[offset] = value & 0xff;
+  bytes[offset + 1] = (value >>> 8) & 0xff;
+}
+
+function writeUint32(bytes, offset, value) {
+  bytes[offset] = value & 0xff;
+  bytes[offset + 1] = (value >>> 8) & 0xff;
+  bytes[offset + 2] = (value >>> 16) & 0xff;
+  bytes[offset + 3] = (value >>> 24) & 0xff;
+}
+
+function dosTimestamp(date) {
+  const time =
+    (date.getHours() << 11) | (date.getMinutes() << 5) | Math.floor(date.getSeconds() / 2);
+  const day =
+    ((date.getFullYear() - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate();
+  return { time, day };
+}
+
+function uniqueZipName(name, usedNames) {
+  const baseName = safeWebpName(name).replace(/[\\/:*?"<>|]/g, "-");
+  let candidate = baseName;
+  let index = 2;
+  while (usedNames.has(candidate.toLowerCase())) {
+    candidate = baseName.replace(/\.webp$/i, `-${index}.webp`);
+    index += 1;
+  }
+  usedNames.add(candidate.toLowerCase());
+  return candidate;
+}
+
+async function createZipBlob(convertedItems) {
+  const encoder = new TextEncoder();
+  const localParts = [];
+  const centralParts = [];
+  const usedNames = new Set();
+  let offset = 0;
+
+  for (const item of convertedItems) {
+    const fileBytes = new Uint8Array(await item.resultBlob.arrayBuffer());
+    const fileNameBytes = encoder.encode(uniqueZipName(item.file.name, usedNames));
+    const checksum = crc32(fileBytes);
+    const { time, day } = dosTimestamp(new Date());
+
+    const localHeader = new Uint8Array(30 + fileNameBytes.length);
+    writeUint32(localHeader, 0, 0x04034b50);
+    writeUint16(localHeader, 4, 20);
+    writeUint16(localHeader, 6, 0x0800);
+    writeUint16(localHeader, 8, 0);
+    writeUint16(localHeader, 10, time);
+    writeUint16(localHeader, 12, day);
+    writeUint32(localHeader, 14, checksum);
+    writeUint32(localHeader, 18, fileBytes.length);
+    writeUint32(localHeader, 22, fileBytes.length);
+    writeUint16(localHeader, 26, fileNameBytes.length);
+    localHeader.set(fileNameBytes, 30);
+    localParts.push(localHeader, fileBytes);
+
+    const centralHeader = new Uint8Array(46 + fileNameBytes.length);
+    writeUint32(centralHeader, 0, 0x02014b50);
+    writeUint16(centralHeader, 4, 20);
+    writeUint16(centralHeader, 6, 20);
+    writeUint16(centralHeader, 8, 0x0800);
+    writeUint16(centralHeader, 10, 0);
+    writeUint16(centralHeader, 12, time);
+    writeUint16(centralHeader, 14, day);
+    writeUint32(centralHeader, 16, checksum);
+    writeUint32(centralHeader, 20, fileBytes.length);
+    writeUint32(centralHeader, 24, fileBytes.length);
+    writeUint16(centralHeader, 28, fileNameBytes.length);
+    writeUint32(centralHeader, 42, offset);
+    centralHeader.set(fileNameBytes, 46);
+    centralParts.push(centralHeader);
+
+    offset += localHeader.length + fileBytes.length;
+  }
+
+  const centralSize = centralParts.reduce((sum, part) => sum + part.length, 0);
+  const endHeader = new Uint8Array(22);
+  writeUint32(endHeader, 0, 0x06054b50);
+  writeUint16(endHeader, 8, convertedItems.length);
+  writeUint16(endHeader, 10, convertedItems.length);
+  writeUint32(endHeader, 12, centralSize);
+  writeUint32(endHeader, 16, offset);
+
+  return new Blob([...localParts, ...centralParts, endHeader], { type: "application/zip" });
+}
+
 function updateControls() {
   const count = items.length;
   fileSection.hidden = count === 0;
   convertButton.disabled = count === 0;
   clearButton.disabled = count === 0;
   downloadAllButton.hidden = !items.some((item) => item.resultUrl);
+  updateDownloadLabel();
   fileCount.textContent = `${count} image${count === 1 ? "" : "s"}`;
   totalSize.textContent = `${formatBytes(items.reduce((sum, item) => sum + item.file.size, 0))} selected`;
   status.textContent = count ? "Ready to convert." : "Add images to begin.";
+}
+
+function updateDownloadLabel() {
+  downloadAllButton.textContent = zipDownloads.checked ? "Download ZIP" : "Download all";
 }
 
 function renderItems() {
@@ -72,6 +184,7 @@ function addFiles(fileCollection) {
       file,
       previewUrl: URL.createObjectURL(file),
       resultUrl: null,
+      resultBlob: null,
       resultSize: 0,
     });
   }
@@ -112,6 +225,7 @@ async function convertItem(item) {
   if (!blob) throw new Error(`Your browser could not convert ${item.file.name}`);
   if (item.resultUrl) URL.revokeObjectURL(item.resultUrl);
   item.resultUrl = URL.createObjectURL(blob);
+  item.resultBlob = blob;
   item.resultSize = blob.size;
 }
 
@@ -144,6 +258,16 @@ for (const eventName of ["dragleave", "drop"]) {
 dropZone.addEventListener("drop", (event) => addFiles(event.dataTransfer.files));
 quality.addEventListener("input", () => (qualityValue.textContent = `${quality.value}%`));
 scale.addEventListener("input", () => (scaleValue.textContent = `${scale.value}%`));
+zipDownloads.addEventListener("change", updateDownloadLabel);
+
+qualityPresets.forEach((preset) => {
+  preset.addEventListener("click", () => {
+    quality.value = preset.dataset.quality;
+    qualityValue.textContent = `${quality.value}%`;
+    qualityPresets.forEach((button) => button.classList.remove("is-recommended"));
+    preset.classList.add("is-recommended");
+  });
+});
 
 clearButton.addEventListener("click", () => {
   for (const item of items) {
@@ -155,8 +279,22 @@ clearButton.addEventListener("click", () => {
   updateControls();
 });
 
-downloadAllButton.addEventListener("click", () => {
-  items.filter((item) => item.resultUrl).forEach(downloadItem);
+downloadAllButton.addEventListener("click", async () => {
+  const convertedItems = items.filter((item) => item.resultBlob);
+  if (zipDownloads.checked && convertedItems.length) {
+    status.textContent = "Building ZIP download...";
+    const zipBlob = await createZipBlob(convertedItems);
+    const zipUrl = URL.createObjectURL(zipBlob);
+    const link = document.createElement("a");
+    link.href = zipUrl;
+    link.download = "webready-images.zip";
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(zipUrl), 1000);
+    status.textContent = `Downloaded ${convertedItems.length} WebP files as a ZIP.`;
+    return;
+  }
+
+  convertedItems.forEach(downloadItem);
 });
 
 convertButton.addEventListener("click", async () => {

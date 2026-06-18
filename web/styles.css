@@ -269,6 +269,56 @@ h2 {
   font-size: 0.75rem;
 }
 
+.cheat-sheet {
+  display: grid;
+  grid-template-columns: 0.9fr 2fr;
+  gap: 18px;
+  margin: 0 26px 26px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #0a1713;
+}
+
+.cheat-sheet h3 {
+  margin-bottom: 0;
+  font-size: 1rem;
+}
+
+.cheat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.quality-preset {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-soft);
+  color: var(--text);
+  text-align: left;
+}
+
+.quality-preset:hover,
+.quality-preset:focus-visible,
+.quality-preset.is-recommended {
+  border-color: var(--green);
+}
+
+.quality-preset strong {
+  color: var(--green);
+  font-size: 0.84rem;
+}
+
+.quality-preset span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
 .file-section {
   padding: 0 26px 26px;
 }
@@ -359,8 +409,24 @@ h2 {
 }
 
 .action-buttons {
+  align-items: center;
   display: flex;
   gap: 10px;
+}
+
+.zip-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.zip-option input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--green);
 }
 
 .download-all {
@@ -448,6 +514,15 @@ h2 {
     width: 100%;
   }
 
+  .cheat-sheet {
+    grid-template-columns: 1fr;
+    margin: 0 18px 18px;
+  }
+
+  .cheat-grid {
+    grid-template-columns: 1fr;
+  }
+
   .file-section {
     padding: 0 18px 18px;
   }
@@ -458,6 +533,10 @@ h2 {
 
   .action-buttons {
     flex-direction: column-reverse;
+  }
+
+  .zip-option {
+    justify-content: center;
   }
 
   .benefits {

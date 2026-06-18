@@ -70,6 +70,31 @@
           </div>
         </div>
 
+        <div class="cheat-sheet" aria-label="Quality cheat sheet">
+          <div>
+            <p class="eyebrow">Quality cheat sheet</p>
+            <h3>Where should I set the compression bar?</h3>
+          </div>
+          <div class="cheat-grid">
+            <button class="quality-preset" type="button" data-quality="92">
+              <strong>90-100%</strong>
+              <span>Hero images, product photos, portfolio work</span>
+            </button>
+            <button class="quality-preset is-recommended" type="button" data-quality="82">
+              <strong>75-85%</strong>
+              <span>Recommended for most website images</span>
+            </button>
+            <button class="quality-preset" type="button" data-quality="65">
+              <strong>55-70%</strong>
+              <span>Thumbnails, blog images, background textures</span>
+            </button>
+            <button class="quality-preset" type="button" data-quality="45">
+              <strong>20-50%</strong>
+              <span>Maximum compression when detail matters less</span>
+            </button>
+          </div>
+        </div>
+
         <div class="file-section" id="fileSection" hidden>
           <div class="file-summary">
             <span id="fileCount">0 images</span>
@@ -81,6 +106,10 @@
         <div class="actions">
           <div class="status" id="status" role="status">Add images to begin.</div>
           <div class="action-buttons">
+            <label class="zip-option">
+              <input id="zipDownloads" type="checkbox" checked />
+              <span>Download all as ZIP</span>
+            </label>
             <button class="ghost-button download-all" id="downloadAllButton" type="button" hidden>
               Download all
             </button>
@@ -119,7 +148,7 @@
           <span class="result-meta"></span>
         </div>
         <button class="download-button" type="button" hidden>Download</button>
-        <button class="remove-button" type="button" aria-label="Remove image">×</button>
+        <button class="remove-button" type="button" aria-label="Remove image">&times;</button>
       </li>
     </template>
 
